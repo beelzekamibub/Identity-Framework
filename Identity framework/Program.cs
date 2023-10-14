@@ -1,3 +1,8 @@
+using Identity_framework.Data;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using System;
+
 namespace Identity_framework
 {
 	public class Program
@@ -7,6 +12,10 @@ namespace Identity_framework
 			var builder = WebApplication.CreateBuilder(args);
 
 			// Add services to the container.
+			builder.Services.AddDbContext<IdentityContext>(e => e.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+			builder.Services.AddIdentity<IdentityUser, IdentityRole>().AddEntityFrameworkStores<IdentityContext>().AddDefaultTokenProviders();
+
 			builder.Services.AddControllersWithViews();
 
 			var app = builder.Build();
