@@ -4,6 +4,7 @@ using Identity_framework.ViewModel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace Identity_framework.Controllers
 {
@@ -12,8 +13,10 @@ namespace Identity_framework.Controllers
 		private readonly UserManager<IdentityUser> _userManager;
 		private readonly SignInManager<IdentityUser> _signInManager;
 		private readonly IEmailService _emailService;
-		public AccountController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager,IEmailService emailService)
+		private readonly RoleManager<IdentityRole> _roleManager;
+		public AccountController(RoleManager<IdentityRole> roleManager,UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager,IEmailService emailService)
 		{
+			_roleManager = roleManager;
 			_emailService = emailService;
 			_userManager = userManager;
 			_signInManager = signInManager;
@@ -36,10 +39,16 @@ namespace Identity_framework.Controllers
 		{
 			if (ModelState.IsValid)
 			{
-				var user = await _userManager.FindByNameAsync(loginViewModel.UserName);
-				if (user != null)
+				var user = await _userManager.FindByEmailAsync(loginViewModel.Email);
+                
+                if (user != null)
 				{
-					if (await _userManager.IsLockedOutAsync(user))
+                    if (!user.EmailConfirmed)
+                    {
+                        TempData["error"] = "Email not confirmed cant login right now";
+                        return View(loginViewModel);
+                    }
+                    if (await _userManager.IsLockedOutAsync(user))
 					{
 						ModelState.AddModelError(string.Empty, "Account locked out due to multiple failed login attempts. Try again later.");
 						return View(loginViewModel);
@@ -75,29 +84,65 @@ namespace Identity_framework.Controllers
 			}
 			return View(loginViewModel);
 		}
-
-		//[HttpPost]
-		//[ValidateAntiForgeryToken]
-		//public async Task<IActionResult> Login(LoginViewModel loginViewModel, string returnUrl)
-		//{
-		//	if (ModelState.IsValid)
-		//	{
-		//		var user = _userManager.Users.FirstOrDefault(x => x.UserName == loginViewModel.UserName);
-		//		if (user == null)
-		//		{
-		//			ModelState.AddModelError("UserName", "Incorrect UserName");
-		//			return View(loginViewModel);
-		//		}
-		//		var checking = await _userManager.CheckPasswordAsync(user, loginViewModel.Password); 
-		//		if (checking)
-		//		{
-		//			await _signInManager.SignInAsync(user, isPersistent: loginViewModel.RememberMe);
-		//			return RedirectToAction("Index", "Home");
-		//		}
-		//	}
-		//	return View(loginViewModel);
-		//}
+		[HttpPost]
+		[AllowAnonymous]
+		[ValidateAntiForgeryToken]
+		public IActionResult ExternalLogin(string provider, string returnUrl)
+		{
+			var redirect = Url.Action("ExternalLoginCallback","Account",new {ReturnUrl=returnUrl});
+			var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirect);
+			return Challenge(properties, provider);
+		}
 		[HttpGet]
+		public async Task<IActionResult> ExternalLoginCallback(string returnurl=null,string remoteError=null)
+		{
+			if (remoteError != null)
+			{
+				ModelState.AddModelError("", "Remote error from external login provider");
+				return View("Login");
+			}
+			var info = await _signInManager.GetExternalLoginInfoAsync();
+			if (info == null)
+			{
+				return RedirectToAction("Login");
+			}
+			var result = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey,isPersistent:false);
+			if (result.Succeeded)
+			{
+				await _signInManager.UpdateExternalAuthenticationTokensAsync(info);
+				return LocalRedirect(returnurl);
+			}
+			else
+			{
+				ViewData["returnUrl"] = returnurl;
+				ViewData["providerDisplayName"] = info.ProviderDisplayName;
+				var email=info.Principal.FindFirstValue(ClaimTypes.Email);
+				return View("ExternalLoginConfirmation", new ExternalLoginConfirmationViewModel { Email=email});
+			}
+		}
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		[AllowAnonymous]
+		public async Task<IActionResult> ExternalLoginConfirmation(ExternalLoginConfirmationViewModel model,string? returnurl=null)
+		{
+			returnurl = returnurl ?? Url.Content("~/");
+			if (ModelState.IsValid)
+			{
+				var info = await _signInManager.GetExternalLoginInfoAsync();
+				if (info == null)
+				{
+					return View("Error");
+				}
+				var user = new AppUserModel { UserName = model.Name, Email = model.Email };
+				await _signInManager.SignInAsync(user, isPersistent: false);
+				await _signInManager.UpdateExternalAuthenticationTokensAsync(info);
+				return LocalRedirect(returnurl);
+			}
+                ViewData["returnUrl"] = returnurl;
+			return View(model);
+		}
+
+        [HttpGet]
 		public IActionResult ForgotPassword()
 		{
 			return View();
@@ -126,11 +171,14 @@ namespace Identity_framework.Controllers
 		[HttpGet]
 		public IActionResult ResetPassword(string userId,string code)
 		{
+			if(code==null)
+				return View("Error");
 			ResetViewModel resetViewModel = new ResetViewModel { code = code ,UserId=userId};	
 			return View(resetViewModel);
 		}
         
         [HttpPost]
+		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> ResetPassword(ResetViewModel resetViewModel)
 		{
 			if (ModelState.IsValid)
@@ -172,6 +220,11 @@ namespace Identity_framework.Controllers
 		[HttpPost]
 		public async Task<IActionResult> Register(RegisterViewModel registerViewModel, string? returnUrl=null)
 		{
+			if(!await _roleManager.RoleExistsAsync("Pokemon"))
+			{
+				await _roleManager.CreateAsync(new IdentityRole() { Name = "Pokemon" });
+                await _roleManager.CreateAsync(new IdentityRole() { Name = "Trainer" });
+            }
 			registerViewModel.ReturnUrl = returnUrl;
 			returnUrl = returnUrl ?? Url.Content("~/");
             //The tilde (~) character in ASP.NET represents the root directory of the application. 

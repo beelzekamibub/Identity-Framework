@@ -12,7 +12,14 @@ namespace Identity_framework
 		public static void Main(string[] args)
 		{
 			var builder = WebApplication.CreateBuilder(args);
-
+            var googleclientsecret = Environment.GetEnvironmentVariable("POCLIENTSECRET").ToString();
+            var googleclientid = Environment.GetEnvironmentVariable("POCLIENTID").ToString();
+			
+            builder.Services.AddAuthentication().AddGoogle(googleOptions =>
+			{
+				googleOptions.ClientId = googleclientid;
+				googleOptions.ClientSecret = googleclientsecret;
+			});
 			// Add services to the container.
 			builder.Services.AddTransient<IEmailService,EmailService>();
 			builder.Services.AddDbContext<IdentityContext>(e => e.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -46,7 +53,7 @@ namespace Identity_framework
 			app.UseStaticFiles();
 
 			app.UseRouting();
-
+			app.UseAuthentication();
 			app.UseAuthorization();
 
 			app.MapControllerRoute(

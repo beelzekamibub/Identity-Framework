@@ -9,6 +9,7 @@
       "Identity framework/1.0.0": {
         "dependencies": {
           "MailKit": "4.3.0",
+          "Microsoft.AspNetCore.Authentication.Google": "7.0.14",
           "Microsoft.AspNetCore.Identity": "2.2.0",
           "Microsoft.AspNetCore.Identity.EntityFrameworkCore": "7.0.12",
           "Microsoft.EntityFrameworkCore": "7.0.12",
@@ -110,6 +111,14 @@
           "Microsoft.AspNetCore.Authentication.Abstractions": "2.2.0",
           "Microsoft.AspNetCore.Http": "2.2.0",
           "Microsoft.AspNetCore.Http.Extensions": "2.2.0"
+        }
+      },
+      "Microsoft.AspNetCore.Authentication.Google/7.0.14": {
+        "runtime": {
+          "lib/net7.0/Microsoft.AspNetCore.Authentication.Google.dll": {
+            "assemblyVersion": "7.0.14.0",
+            "fileVersion": "7.0.1423.52316"
+          }
         }
       },
       "Microsoft.AspNetCore.Cryptography.Internal/7.0.12": {
@@ -878,6 +887,13 @@
       "sha512": "sha512-XlVJzJ5wPOYW+Y0J6Q/LVTEyfS4ssLXmt60T0SPP+D8abVhBTl+cgw2gDHlyKYIkcJg7btMVh383NDkMVqD/fg==",
       "path": "microsoft.aspnetcore.authentication.core/2.2.0",
       "hashPath": "microsoft.aspnetcore.authentication.core.2.2.0.nupkg.sha512"
+    },
+    "Microsoft.AspNetCore.Authentication.Google/7.0.14": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-UcvNbAEhSPVrZw9Jzk8MTHPrLzCGWTp280rm07Q665Qa3oNaSbE1tyrx6vnjA0L1bbYtm0FwORxZsQWpRcfl0A==",
+      "path": "microsoft.aspnetcore.authentication.google/7.0.14",
+      "hashPath": "microsoft.aspnetcore.authentication.google.7.0.14.nupkg.sha512"
     },
     "Microsoft.AspNetCore.Cryptography.Internal/7.0.12": {
       "type": "package",

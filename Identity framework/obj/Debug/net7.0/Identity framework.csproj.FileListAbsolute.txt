@@ -84,3 +84,4 @@ C:\Users\chait\source\repos\Identity framework\Identity framework\bin\Debug\net7
 C:\Users\chait\source\repos\Identity framework\Identity framework\bin\Debug\net7.0\MimeKit.dll
 C:\Users\chait\source\repos\Identity framework\Identity framework\bin\Debug\net7.0\System.Security.Cryptography.Pkcs.dll
 C:\Users\chait\source\repos\Identity framework\Identity framework\bin\Debug\net7.0\runtimes\win\lib\net7.0\System.Security.Cryptography.Pkcs.dll
+C:\Users\chait\source\repos\Identity framework\Identity framework\bin\Debug\net7.0\Microsoft.AspNetCore.Authentication.Google.dll
